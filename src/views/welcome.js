@@ -1,4 +1,4 @@
-import { AppRoutes } from "../router/routes.js";
+import Storage from '../storage/app-storage.js';
 
 export const WelcomeView = () => {
 
@@ -14,7 +14,7 @@ export const WelcomeView = () => {
     welcomeTitleText.textContent = 'Make it';
 
     const welcomeTitleImage = document.createElement('img');
-    welcomeTitleImage.src = './brand/logo.png';
+    welcomeTitleImage.src = `${Storage.imagesURL}/logo/makeit-logo.webp`;
     welcomeTitleImage.alt = 'Make it logo';
 
     welcomeTitle.append(welcomeTitleText, welcomeTitleImage);

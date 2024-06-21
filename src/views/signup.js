@@ -1,8 +1,6 @@
 import Storage from '../storage/app-storage.js';
 import { Icons } from '../components/index.js';
 
-const avatarsBaseUrl = 'https://res.cloudinary.com/dzgraaqq2/image/upload/v1717354674/make-it/avatars'
-
 export const SignupView = async () => {
 
     document.title = 'Make It - Regístrate'
@@ -29,7 +27,7 @@ export const SignupView = async () => {
 
     for (let i = 1; i <= 20; i++) {
         const avatarImg = document.createElement('img');
-        avatarImg.src = `${avatarsBaseUrl}/avatar${i}.webp`;
+        avatarImg.src = `${Storage.imagesURL}/avatars/avatar${i}.webp`;
         avatarImg.alt = `Avatar ${i}`;
         avatarImg.classList.add('avatar__dialog--img');
 
