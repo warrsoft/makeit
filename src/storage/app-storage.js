@@ -1,4 +1,4 @@
-const baseURL = 'http://localhost:1234/api'
+const baseURL = 'https://makeit-server-production.up.railway.app/api'
 
 const getQuestions = async () => {
     try {
