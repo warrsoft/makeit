@@ -73,11 +73,11 @@ const login = async (user) => {
 }
 
 const setToStorage = (key, value) => {
-    localStorage.setItem(key, value);
+    sessionStorage.setItem(key, value);
 }
 
 const getFromStorage = (key) => {
-    return localStorage.getItem(key);
+    return sessionStorage.getItem(key);
 }
 
 const init = () => {

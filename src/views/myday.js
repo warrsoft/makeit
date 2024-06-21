@@ -6,6 +6,7 @@ export const MyDayView = async (token) => {
 
     if (!token) {
         window.location.hash = AppRoutes.login;
+        return;
     }
 
     let tasks = [];

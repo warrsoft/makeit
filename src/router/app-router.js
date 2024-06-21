@@ -31,6 +31,10 @@ export const AppRouter = async (app) => {
                 });
             break;
         case AppRoutes.login:
+            if(Storage.getFromStorage('token')) {
+                location.hash = AppRoutes.myday;
+                return;
+            }
             renderView(Layout(Icons.backArrow, 'Inicia Sesión', false, 'Acceder'), ...[LoginView()], appContainer)
                 .then(() => {
                     renderEventListeners(AppRoutes.login);
