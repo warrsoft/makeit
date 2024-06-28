@@ -1,5 +1,7 @@
 import { AppRoutes } from '../router/routes.js';
 import Storage from '../storage/app-storage.js';
+import { taskFrameView } from './new-task-frame.js';
+import { Icons } from '../components/index.js';
 
 export const renderEventListeners = (route) => {
     if (!route) return;
@@ -351,27 +353,37 @@ const signupEvents = () => {
     }
 }
 
-const mydayEvents = () => {
+const mydayEvents = async () => {
+
+    // const taskFrame = await taskFrameView();
+    // document.body.appendChild(taskFrame);
+
     const completedTasksContainer = document.querySelector('#completed__tasks');
 
     const checkBtns = document.querySelectorAll('.task__completed--btn');
+
+    const tasksList = document.querySelectorAll('.task');
     
     const dropdownBtn = document.querySelector('.dropdown__btn');
-    const newTask = document.querySelector('.layout__footer--button');
+    const newTaskBtn = document.querySelector('.layout__footer--button');
 
-    dropdownBtn.onclick = () => {
-        dropdownBtn.classList.toggle('show');
-        if(completedTasksContainer.classList.contains('hidden')) {
-            completedTasksContainer.classList.remove('hidden');
-            setTimeout(() => {
+    try {
+        dropdownBtn.addEventListener('click', () => {
+            dropdownBtn.classList.toggle('show');
+            if (completedTasksContainer.classList.contains('hidden')) {
+                completedTasksContainer.classList.remove('hidden');
+                setTimeout(() => {
+                    completedTasksContainer.classList.toggle('show');
+                }, 100);
+            } else {
                 completedTasksContainer.classList.toggle('show');
-            }, 100);
-        } else {
-            completedTasksContainer.classList.toggle('show');
-            setTimeout(() => {
-                completedTasksContainer.classList.add('hidden');
-            }, 100);
-        }
+                setTimeout(() => {
+                    completedTasksContainer.classList.add('hidden');
+                }, 100);
+            }
+        });
+    } catch {
+        console.error('Not completed tasks');
     }
 
     checkBtns.forEach(btn => {
@@ -379,8 +391,72 @@ const mydayEvents = () => {
             e.preventDefault();
             const task = btn.closest('.task');
             task.classList.toggle('completed');
-            const userId = Storage.getFromStorage('token');
-            const taskId = task.id;
         });
-    })
+    });
+
+    if(tasksList.length !== 0) {
+        tasksList.forEach(task => {
+            task.onclick = async (e) => {
+                if (e.target.tagName === 'BUTTON' || e.target.tagName === 'IMG') return;
+                const taskId = task.id;
+                const taskTitle = task.querySelector('.task__title').innerHTML;
+                const subTasks = task.querySelectorAll('.subtask') || [];
+                const taskObject = {
+                    id: taskId,
+                    title: taskTitle,
+                    subtasks: [...subTasks].map(subtask => ({ title: subtask.innerHTML }))
+                }
+                const dialog = await newTaskDialog(taskObject);
+                document.body.appendChild(dialog);
+                dialog.showModal();
+            }
+        })
+    }
+
+    newTaskBtn.addEventListener('click', async () => {
+        const taskDialog = await taskFrameView();
+        document.body.appendChild(taskDialog);
+        taskDialog.showModal();
+
+        const closeFrame = taskDialog.querySelector('.close__frame--btn');
+
+        const taskDoneBtn = taskDialog.querySelector('.task--frame__completed--btn');
+
+        const subTaskNewBtn = taskDialog.querySelector('#subtask__new--btn');
+
+        closeFrame.addEventListener('click', (e) => {
+            e.preventDefault();
+            taskDialog.close();
+        });
+
+        taskDoneBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            const task = taskDoneBtn.closest('.frame__task');
+            task.classList.toggle('completed');
+        });
+
+        subTaskNewBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            const subTasksList = taskDialog.querySelector('.subtasks__list');
+            const subTask = document.createElement('li');
+            subTask.classList.add('subtask');
+            subTask.innerHTML = `
+                <button class="subtask__completed--btn">
+                    <img src="${Icons.check}" alt="Subtarea completada">
+                </button>
+                <input type="text" class="subtask__info">
+            `;
+            subTasksList.appendChild(subTask);
+
+            const subTasksBtn = subTasksList.querySelectorAll('.subtask__completed--btn');
+
+            subTasksBtn.forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const subTask = btn.closest('.subtask');
+                    subTask.classList.toggle('completed');
+                });
+            });
+        });
+    });
 }

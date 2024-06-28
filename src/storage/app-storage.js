@@ -1,4 +1,5 @@
-const baseURL = 'https://makeit-server-production.up.railway.app/api'
+// const baseURL = 'https://makeit-server-production.up.railway.app/api'
+const baseURL = 'http://localhost:1234/api'
 const imagesURL = 'https://res.cloudinary.com/dzgraaqq2/image/upload/v1717354674/make-it'
 
 const getQuestions = async () => {

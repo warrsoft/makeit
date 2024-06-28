@@ -4,4 +4,5 @@ export const Icons = {
     menu: '/icons/More_Grid_Big.svg',
     check: '/icons/completed_check.svg',
     dropdown: '/icons/Chevron_Down.svg',
+    listChecklist: '/icons/List_Checklist.svg',
 }
