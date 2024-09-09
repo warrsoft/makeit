@@ -1,5 +1,5 @@
 import { AppRoutes } from "./routes.js";
-import { WelcomeView, LoginView, SignupView, NotFoundView, LoadingView, MyDayView } from '../views/index.js';
+import { WelcomeView, LoginView, SignupView, NotFoundView, LoadingView, MyDayView, GroupView, SettingsView, ProfileView, MyGroupsView } from '../views/index.js';
 import { Layout, Icons } from "../components/index.js";
 import { renderView, renderEventListeners } from "../use-cases/index.js";
 import Storage from "../storage/app-storage.js";
@@ -23,9 +23,12 @@ export const AppRouter = async (app) => {
 
     location.hash = currentHash;
 
+    const token = Storage.getFromStorage('token');
+    const currentGroup = Storage.getFromStorage('currentGroup');
+
     switch (currentHash) {
         case AppRoutes.welcome:
-            renderView(null, ...[WelcomeView()], appContainer)
+            renderView(null, ...[WelcomeView(token)], appContainer)
                 .then(() => {
                     renderEventListeners(AppRoutes.welcome);
                 });
@@ -35,7 +38,7 @@ export const AppRouter = async (app) => {
                 location.hash = AppRoutes.myday;
                 return;
             }
-            renderView(Layout(Icons.backArrow, 'Inicia Sesión', false, 'Acceder'), ...[LoginView()], appContainer)
+            renderView(Layout(Icons.backArrow, 'Inicia Sesión', false, 'Acceder'), ...[LoginView(token)], appContainer)
                 .then(() => {
                     renderEventListeners(AppRoutes.login);
                 });
@@ -44,20 +47,50 @@ export const AppRouter = async (app) => {
             appContainer.innerHTML = 'Forget';
             break;
         case AppRoutes.signup:
-            renderView(Layout(Icons.backArrow, 'Regístrate', false, 'Registrarse'), ...[await SignupView()], appContainer)
+            renderView(Layout(Icons.backArrow, 'Regístrate', false, 'Registrarse'), ...[await SignupView(token)], appContainer)
                 .then(() => {
                     renderEventListeners(AppRoutes.signup);
                 });
             break;
         case AppRoutes.myday:
-            const token = Storage.getFromStorage('token');
             renderView(Layout(Icons.menu, 'Mi Día', true, 'Nueva Tarea'), ...[await MyDayView(token)], appContainer)
                 .then(() => {
                     renderEventListeners(AppRoutes.myday);
                 });
             break;
+        case AppRoutes.group:
+            if (!currentGroup) {
+                renderView(null, ...[NotFoundView(token)], appContainer);
+                return;
+            }
+            const group = Storage.getGroupById(currentGroup);
+            group.then(async group => {
+                renderView(Layout(Icons.menu, group[0].description, false, 'Nueva Tarea'), ...[await GroupView(token, group[0])], appContainer)
+                    .then(() => {
+                        renderEventListeners(AppRoutes.group);
+                    });
+            })
+            break;
+        case AppRoutes.settings:
+            renderView(Layout(Icons.backArrow, 'Configuración', false, '', 'Cerrar Sesión'), ...[SettingsView(token)], appContainer)
+                .then(() => {
+                    renderEventListeners(AppRoutes.settings);
+                });
+            break;
+        case AppRoutes.profile:
+            renderView(Layout(Icons.backArrow, 'Perfil', false, 'Guardar Cambios'), ...[await ProfileView(token)], appContainer)
+                .then(() => {
+                    renderEventListeners(AppRoutes.profile);
+                });
+            break;
+        case AppRoutes.mygroups:
+            renderView(Layout(Icons.backArrow, 'Mis Grupos', false, 'Guardar Cambios'), ...[await MyGroupsView(token)], appContainer)
+                .then(() => {
+                    renderEventListeners(AppRoutes.mygroups);
+                });
+            break
         default:
-            renderView(null, ...[NotFoundView()], appContainer);
+            renderView(null, ...[NotFoundView(token)], appContainer);
             break;
     }
 

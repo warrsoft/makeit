@@ -1,25 +1,27 @@
+import { AppRoutes } from '../router/routes.js';
 import Storage from '../storage/app-storage.js';
 import { Icons } from '../components/index.js';
 
-export const SignupView = async (token) => {
+export const ProfileView = async (token) => {
+    if (!token) {
+        window.location.hash = AppRoutes.login;
+        return;
+    }
 
-    const navbar = document.querySelector('#navbar');
-    if (!token && navbar) navbar.remove();
+    document.title = 'Make It - Mi Perfil';
 
-    document.title = 'Make It - Regístrate'
-
-    const signupView = document.createElement('div');
-    signupView.id = 'signup__section';
+    const profileView = document.createElement('div');
+    profileView.id = 'profile__section';
 
     const dialog = document.createElement('dialog');
     dialog.classList.add('avatar__dialog');
 
     const dialogTitle = document.createElement('h2');
-    dialogTitle.textContent = 'Selecciona tu avatar';
+    dialogTitle.textContent = 'Edita tu avatar';
 
     const dialogClose = document.createElement('button');
     dialogClose.classList.add('avatar__dialog--close');
-    
+
     const dialogCloseIcon = document.createElement('img');
     dialogCloseIcon.src = Icons.closeX;
 
@@ -41,16 +43,7 @@ export const SignupView = async (token) => {
     dialog.appendChild(dialogTitle);
     dialog.appendChild(dialogContent);
 
-    let questions = [];
-
-    await Storage.getQuestions()
-        .then((data) => {
-            if (data) questions = data;
-        }).catch (error => {
-            console.log('Error getting the questions from the server...', error);
-        });
-    
-    signupView.innerHTML = `
+    profileView.innerHTML = `
         <form class="signup__form">
             <div class="signup__form--avatar">
                 <button class="avatar" selected="false">
@@ -80,15 +73,6 @@ export const SignupView = async (token) => {
                 <span class="error__form--message"></span>
             </div>
             <div class="signup__form--group">
-                <label for="question">Preguntas de Seguridad *</label>
-                <span style="font-size: .75rem;">Debe seleccionar 3 preguntas de seguridad</span>
-                <select name="questions" id="questions">
-                <option value="0">Selecciona una pregunta de seguridad</option>
-                ${questions.map(question => `<option value="${question.id}">${question.description}</option>`)}
-            </select>
-            <span class="error__form--message"></span>
-            </div>
-            <div class="signup__form--group">
                 <label for="answer">Respuesta *</label>
                 <div class="answer__container">
                 <input type="text" id="answer" name="answer">
@@ -98,7 +82,7 @@ export const SignupView = async (token) => {
         </form>
     `;
 
-    signupView.appendChild(dialog);
+    profileView.appendChild(dialog);
 
-    return [signupView];
+    return [profileView];
 }

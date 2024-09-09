@@ -1,6 +1,9 @@
 import Storage from '../storage/app-storage.js';
 
-export const WelcomeView = () => {
+export const WelcomeView = (token) => {
+
+    const navbar = document.querySelector('#navbar');
+    if (navbar) navbar.remove();
 
     document.title = 'Make It - Welcome';
 

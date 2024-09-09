@@ -1,4 +1,8 @@
-export const NotFoundView = () => {
+export const NotFoundView = (token) => {
+
+    const navbar = document.querySelector('#navbar');
+    if(!token && navbar) navbar.remove();
+
     const notFound = document.createElement('div');
     notFound.id = 'notfound__section';
     notFound.innerHTML = `

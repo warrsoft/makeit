@@ -5,4 +5,6 @@ export const Icons = {
     check: '/icons/completed_check.svg',
     dropdown: '/icons/Chevron_Down.svg',
     listChecklist: '/icons/List_Checklist.svg',
+    Settings: '/icons/Settings.svg',
+    AddGroup: '/icons/Add_Column.svg',
 }

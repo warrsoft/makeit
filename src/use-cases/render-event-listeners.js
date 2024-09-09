@@ -2,6 +2,7 @@ import { AppRoutes } from '../router/routes.js';
 import Storage from '../storage/app-storage.js';
 import { taskFrameView } from './new-task-frame.js';
 import { Icons } from '../components/index.js';
+import { AppRouter } from '../router/app-router.js';
 
 export const renderEventListeners = (route) => {
     if (!route) return;
@@ -17,7 +18,15 @@ export const renderEventListeners = (route) => {
             signupEvents();
             break;
         case AppRoutes.myday:
-            mydayEvents();
+            groupEvents();
+        case AppRoutes.group:
+            groupEvents();
+        case AppRoutes.settings:
+            settingsEvents();
+        case AppRoutes.profile:
+            profileEvents();
+        case AppRoutes.mygroups:
+            myGroupsEvents();
         default:
             break;
     }
@@ -353,22 +362,333 @@ const signupEvents = () => {
     }
 }
 
-const mydayEvents = async () => {
+const navbarEvents = () => {
+    const NavBarBtn = document.querySelector('.layout__header--button');
 
-    // const taskFrame = await taskFrameView();
-    // document.body.appendChild(taskFrame);
+    NavBarBtn.addEventListener('click', () => {
+        const navbar = document.querySelector('#navbar');
+        const overlay = document.querySelector('#overlay');
+        const addGroup = document.querySelector('.navbar__footer--add__group--btn');
+        const signout = document.querySelector('.navbar__footer--signout--btn');
+        const navbarGroups = document.querySelectorAll('.navbar__group');
+        const settingsBtn = document.querySelector('.settings--btn');
+
+        navbar.classList.add('show');
+        overlay.classList.add('show');
+
+        navbarGroups.forEach(group => {
+            group.onclick = () => {
+                navbar.classList.remove('show');
+                overlay.classList.remove('show');
+                if (group.id === '0') {
+                    Storage.setToStorage('currentGroup', 0);
+                    location.hash = AppRoutes.myday;
+                } else {
+                    Storage.setToStorage('currentGroup', group.id);
+                    location.hash = AppRoutes.group;
+                    AppRouter();
+                }
+            };
+        });
+
+        overlay.addEventListener('click', () => {
+            navbar.classList.remove('show');
+            overlay.classList.remove('show');
+        });
+
+        addGroup.onclick = () => {
+            navbar.classList.remove('show');
+            overlay.classList.remove('show');
+            let addGroupDialog = document.querySelector('.add__group--dialog');
+            if (!addGroupDialog) {
+                addGroupDialog = document.createElement('dialog');
+                addGroupDialog.classList.add('add__group--dialog');
+                addGroupDialog.innerHTML =
+                    `
+                <form class="add__group">
+                    <div class="add__group--container">
+                        <label for="group__name">Nombre del grupo</label>
+                        <input type="text" id="group__name" class="group__name">
+                        <span class="error__form--message"></span>
+                    </div>
+                    <div class="add__group--container">
+                        <label for="group__color">Color del grupo</label>
+                        <input  type="color" id="group__color" class="group__color">
+                    </div>
+                    <div class="add__group--ctas">
+                        <button class="save__group--btn">Guardar</button>
+                        <button class="cancel__group--btn">Cancelar</button>
+                    </div>
+                </form>
+            `;
+                document.body.appendChild(addGroupDialog);
+            } else {
+                const groupName = addGroupDialog.querySelector('.group__name');
+                const groupColor = addGroupDialog.querySelector('.group__color');
+                groupName.value = '';
+                groupColor.value = '#000000';
+            }
+
+            addGroupDialog.showModal();
+
+            const saveGroupBtn = addGroupDialog.querySelector('.save__group--btn');
+            const cancelGroupBtn = addGroupDialog.querySelector('.cancel__group--btn');
+
+            saveGroupBtn.onclick = async (e) => {
+                e.preventDefault();
+                const groupName = addGroupDialog.querySelector('.group__name');
+                const groupColor = addGroupDialog.querySelector('.group__color');
+                if (!groupName.value) {
+                    groupName.nextElementSibling.innerHTML = 'Campo requerido';
+                    return;
+                }
+                const group = {
+                    description: groupName.value,
+                    color: groupColor.value,
+                    userId: Storage.getFromStorage('token')
+                }
+                const newGroup = await Storage.saveGroup(group);
+                if(newGroup.id) {
+                    addGroupDialog.close();
+                    Storage.setToStorage('currentGroup', newGroup.id);
+                    location.hash = AppRoutes.group;
+                    AppRouter();
+                };
+            };
+
+            cancelGroupBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                addGroupDialog.close();
+            });
+        };
+
+        signout.addEventListener('click', (e) => {
+            e.preventDefault();
+            Storage.clearStorage();
+            navbar.classList.remove('show');
+            overlay.classList.remove('show');
+            location.hash = AppRoutes.login;
+        });
+
+        settingsBtn.addEventListener('click', () => {
+            navbar.classList.remove('show');
+            overlay.classList.remove('show');
+            location.hash = AppRoutes.settings;
+        });
+    })
+}
+
+const taskFrameEvents = () => {
+    const taskDialog = document.querySelector('#taskDialog');
+
+    const closeFrame = taskDialog.querySelector('.close__frame--btn');
+
+    const taskDoneBtn = taskDialog.querySelector('.task--frame__completed--btn');
+
+    const subTaskNewBtn = taskDialog.querySelector('#subtask__new--btn');
+
+    closeFrame.addEventListener('click', (e) => {
+        e.preventDefault();
+        taskDialog.close();
+        taskDialog.remove();
+        Storage.setToStorage('taskId', '');
+    });
+
+    taskDoneBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        const task = taskDialog.querySelector('.frame__task');
+        task.classList.toggle('completed');
+    });
+
+    subTaskNewBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        const subTasksList = taskDialog.querySelector('.subtasks__list');
+        const subTask = document.createElement('li');
+        subTask.classList.add('subtask');
+        subTask.innerHTML = `
+                <button class="subtask__completed--btn">
+                    <img src="${Icons.check}" alt="Subtarea completada">
+                </button>
+                <input type="text" class="subtask__info">
+            `;
+        subTasksList.appendChild(subTask);
+
+        const subTasksBtn = subTasksList.querySelectorAll('.subtask__completed--btn');
+
+        subTasksBtn.forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.preventDefault();
+                const subTask = btn.closest('.subtask');
+                subTask.classList.toggle('completed');
+            });
+        });
+    });
+
+    // Inputs Event Listeners
+
+    const titleInput = taskDialog.querySelector('#task__title');
+    const titleInputError = document.querySelector('.frame__task .task__error')
+    const taskGroupInput = taskDialog.querySelector('#task__group');
+    const taskMyDayInput = taskDialog.querySelector('#task__myday');
+    const dueDateInput = taskDialog.querySelector('#task__due');
+    const dueTimeInput = taskDialog.querySelector('#task__time');
+    const descriptionInput = taskDialog.querySelector('#task__description');
+
+    titleInput.addEventListener('input', (e) => {
+        const titleValue = e.target.value;
+        if (!titleValue) {
+            titleInputError.innerHTML = 'Campo requerido';
+        } else {
+            titleInputError.innerHTML = '';
+        }
+    });
+
+    // Buttons Event Listeners
+
+    const taskId = Storage.getFromStorage('taskId');
+    const saveTaskBtn = taskDialog.querySelector('.save__task--btn');
+    const deleteTaskBtn = taskDialog.querySelector('.delete__task--btn');
+
+    if (taskId.length === 0) {
+        deleteTaskBtn.textContent = 'Cancelar';
+    }
+
+    saveTaskBtn.addEventListener('click', async (e) => {
+        e.preventDefault();
+        const titleValue = titleInput.value;
+        if (!titleValue) {
+            titleInputError.innerHTML = 'Campo requerido';
+            return;
+        } else {
+            titleInputError.innerHTML = '';
+        }
+
+        let currentGroup = Storage.getFromStorage('currentGroup');
+        currentGroup *= 1;
+        
+        let isMyDay = 0;
+
+        let taskId = Storage.getFromStorage('taskId');
+
+        if (taskId.length > 0) {
+            if(taskMyDayInput.checked) isMyDay = 1;
+            else isMyDay = 0;
+        } else {
+            if(currentGroup === 0) isMyDay = 1;
+            else isMyDay = 0;
+        }
+
+        const statusId = taskDialog.querySelector('.frame__task').classList.contains('completed') ? 2 : 1;
+
+        const task = {
+            id: taskId.length > 0 ? taskId : null,
+            title: titleValue,
+            dueDate: `${dueDateInput.value} ${dueTimeInput.value}`.length > 1 ? `${dueDateInput.value} ${dueTimeInput.value}` : null,
+            description: descriptionInput.value || null,
+            myday: isMyDay,
+            statusId: statusId,
+            groupId: taskGroupInput.value ? taskGroupInput.value * 1 : null,
+            userId: Storage.getFromStorage('token')
+        }
+
+        Object.keys(task).forEach(key => {
+            if (task[key] === null || task[key] === '' || task[key] === undefined) {
+                delete task[key];
+            }
+        })
+
+        const subTasks = [];
+        const subTasksElements = taskDialog.querySelectorAll('.subtask');
+        if (subTasksElements.length > 0) {
+            subTasksElements.forEach(subtask => {
+                if (subtask.querySelector('.subtask__info').value) {
+                    subTasks.push(
+                        {
+                            id: subtask.id || null,
+                            title: subtask.querySelector('.subtask__info').value
+                        }
+                    )
+                }
+            })
+        }
+
+        Object.keys(subTasks).forEach(key => {
+            if (!subTasks[key]) {
+                delete subTasks[key];
+            }
+        })
+
+        if(!task.id) {
+            const taskCreated = await Storage.saveTask(task);
+            if (taskCreated.id) {
+                if (subTasks.length > 0) {
+                    Storage.saveSubTasks(subTasks, taskCreated.id);
+                }
+                taskDialog.close();
+                AppRouter();
+            } else {
+                console.error('Error saving task');
+            }
+        } else if (task.id) {
+            const taskUpdated = await Storage.updateTask(task);
+            if (taskUpdated.id) {
+                if (subTasks.length > 0 && subTasks[0].id) {
+                    Storage.updateSubTasks(subTasks);
+                } else if (subTasks.length > 0 && !subTasks[0].id) {
+                    Storage.saveSubTasks(subTasks, task.id);
+                }
+                taskDialog.close();
+                AppRouter();
+            } else {
+                console.error('Error updating task');
+            }
+        }
+    });
+
+    deleteTaskBtn.onclick = async (e) => {
+        e.preventDefault();
+        if(taskId) {
+            const deletedTask = await Storage.deleteTask(taskId);
+                try {
+                    const subTasks = await Storage.getSubTasks(taskId);
+                    if(subTasks.length > 0) {
+                        const deletedSubTasks = [];
+                        subTasks.forEach(async subtask => {
+                            if(subtask.id) {
+                                deletedSubTasks.push(await Storage.deleteSubTask(subtask.id));
+                            }
+                        })
+                        if(deletedSubTasks.length > 0) {
+                            taskDialog.close();
+                            AppRouter();
+                        }
+                    } else {
+                        taskDialog.close();
+                        AppRouter();
+                    }
+                } catch {
+                    taskDialog.close();
+                    AppRouter();
+                }
+            }
+            taskDialog.close();
+            AppRouter();
+    }
+}
+
+const groupEvents = async () => {
 
     const completedTasksContainer = document.querySelector('#completed__tasks');
 
     const checkBtns = document.querySelectorAll('.task__completed--btn');
 
     const tasksList = document.querySelectorAll('.task');
-    
+
     const dropdownBtn = document.querySelector('.dropdown__btn');
     const newTaskBtn = document.querySelector('.layout__footer--button');
 
     try {
-        dropdownBtn.addEventListener('click', () => {
+        dropdownBtn.onclick = () => {
             dropdownBtn.classList.toggle('show');
             if (completedTasksContainer.classList.contains('hidden')) {
                 completedTasksContainer.classList.remove('hidden');
@@ -381,82 +701,308 @@ const mydayEvents = async () => {
                     completedTasksContainer.classList.add('hidden');
                 }, 100);
             }
-        });
-    } catch {
-        console.error('Not completed tasks');
-    }
+        };
+    } catch { }
+
+    navbarEvents();
 
     checkBtns.forEach(btn => {
-        btn.addEventListener('click', (e) => {
+        btn.onclick = (e) => {
             e.preventDefault();
-            const task = btn.closest('.task');
-            task.classList.toggle('completed');
-        });
+            const taskElement = btn.closest('.task');
+            taskElement.classList.toggle('completed');
+            const task = {
+                id: taskElement.id,
+                statusId: taskElement.classList.contains('completed') ? 2 : 1
+            }
+            Storage.updateTask(task);
+            setTimeout(() => {
+                AppRouter();
+            }, 500);
+        };
     });
 
-    if(tasksList.length !== 0) {
+    if (tasksList.length !== 0) {
         tasksList.forEach(task => {
             task.onclick = async (e) => {
                 if (e.target.tagName === 'BUTTON' || e.target.tagName === 'IMG') return;
                 const taskId = task.id;
-                const taskTitle = task.querySelector('.task__title').innerHTML;
-                const subTasks = task.querySelectorAll('.subtask') || [];
-                const taskObject = {
-                    id: taskId,
-                    title: taskTitle,
-                    subtasks: [...subTasks].map(subtask => ({ title: subtask.innerHTML }))
-                }
-                const dialog = await newTaskDialog(taskObject);
+                const taskObject = Storage.getTasksById(taskId);
+                const taskData = await taskObject;
+                taskData.subtasks = [];
+                try {
+                    const subTasks = await Storage.getSubTasks(taskId)
+                    taskData.subtasks = [...subTasks];
+                } catch { }
+                const dialog = await taskFrameView(taskData);
                 document.body.appendChild(dialog);
                 dialog.showModal();
+                Storage.setToStorage('taskId', taskId);
+                taskFrameEvents();
             }
         })
     }
 
-    newTaskBtn.addEventListener('click', async () => {
+    newTaskBtn.onclick = async () => {
         const taskDialog = await taskFrameView();
         document.body.appendChild(taskDialog);
         taskDialog.showModal();
-
-        const closeFrame = taskDialog.querySelector('.close__frame--btn');
-
-        const taskDoneBtn = taskDialog.querySelector('.task--frame__completed--btn');
-
-        const subTaskNewBtn = taskDialog.querySelector('#subtask__new--btn');
-
-        closeFrame.addEventListener('click', (e) => {
-            e.preventDefault();
-            taskDialog.close();
-        });
-
-        taskDoneBtn.addEventListener('click', (e) => {
-            e.preventDefault();
-            const task = taskDoneBtn.closest('.frame__task');
-            task.classList.toggle('completed');
-        });
-
-        subTaskNewBtn.addEventListener('click', (e) => {
-            e.preventDefault();
-            const subTasksList = taskDialog.querySelector('.subtasks__list');
-            const subTask = document.createElement('li');
-            subTask.classList.add('subtask');
-            subTask.innerHTML = `
-                <button class="subtask__completed--btn">
-                    <img src="${Icons.check}" alt="Subtarea completada">
-                </button>
-                <input type="text" class="subtask__info">
-            `;
-            subTasksList.appendChild(subTask);
-
-            const subTasksBtn = subTasksList.querySelectorAll('.subtask__completed--btn');
-
-            subTasksBtn.forEach(btn => {
-                btn.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    const subTask = btn.closest('.subtask');
-                    subTask.classList.toggle('completed');
-                });
-            });
-        });
-    });
+        taskFrameEvents();
+    };
 }
+
+const settingsEvents = () => {
+    const backBtn = document.querySelector('.layout__header--button');
+    const signoutBtn = document.querySelector('.layout__footer--button');
+
+    backBtn.onclick = (e) => {
+        e.preventDefault();
+        location.hash = AppRoutes.myday;
+    }
+
+    signoutBtn.onclick = (e) => {
+        e.preventDefault();
+        Storage.clearStorage();
+        location.hash = AppRoutes.login;
+    }
+
+    const profileBtn = document.querySelector('.profile__btn');
+    const myGroupsBtn = document.querySelector('.mygroups__btn');
+
+    profileBtn.onclick = () => {
+        location.hash = AppRoutes.profile;
+    }
+
+    myGroupsBtn.onclick = () => {
+        location.hash = AppRoutes.mygroups;
+    }
+}
+
+const profileEvents = () => {
+    try {
+
+        // Inputs Variables
+
+        const emailInput = document.querySelector('#email');
+        const usernameInput = document.querySelector('#name');
+        const passwordInput = document.querySelector('#password');
+        const passwordConfirmInput = document.querySelector('#passwordConfirm');
+        const questionsSelect = document.querySelector('#questions');
+        const anwerInput = document.querySelector('#answer');
+
+        const emailError = emailInput.nextElementSibling;
+        const usernameError = usernameInput.nextElementSibling;
+        const passwordError = passwordInput.nextElementSibling;
+        const passwordConfirmError = passwordConfirmInput.nextElementSibling;
+        const questionsSelectError = questionsSelect.nextElementSibling;
+        const answerInputError = document.querySelector('.answer__container').nextElementSibling;
+
+        // Buttons Variables
+
+        const backBtn = document.querySelector('.layout__header--button');
+        const avatarBtn = document.querySelector('.avatar');
+        const closeAvatarBtn = document.querySelector('.avatar__dialog--close');
+        const signupBtn = document.querySelector('.layout__footer--button');
+        const avatarsImg = document.querySelectorAll('.avatar__dialog--img');
+        const nextQuestionBtn = document.querySelector('.next__question--btn');
+
+
+        // Inputs Event Listeners
+        const emailPattern = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,6}$/;
+
+        emailInput.addEventListener('input', (e) => {
+            const emailValue = e.target.value;
+            if (!emailPattern.test(emailValue)) {
+                emailError.innerHTML = 'Debe ser un correo válido';
+            } else {
+                emailError.innerHTML = '';
+            }
+        });
+
+        usernameInput.addEventListener('input', (e) => {
+            const usernameValue = e.target.value;
+            if (usernameValue.length < 4) {
+                usernameError.innerHTML = 'Debe tener al menos 4 caracteres';
+            } else {
+                usernameError.innerHTML = '';
+            }
+        });
+
+        passwordInput.addEventListener('input', (e) => {
+            const passwordValue = e.target.value;
+            if (passwordValue.length < 8) {
+                passwordError.innerHTML = 'Debe tener al menos 8 caracteres';
+            } else {
+                passwordError.innerHTML = '';
+            }
+        });
+
+        passwordConfirmInput.addEventListener('input', (e) => {
+            const passwordConfirmValue = e.target.value;
+            const passwordValue = password.value;
+            if (passwordConfirmValue !== passwordValue) {
+                passwordConfirmError.innerHTML = 'Las contraseñas no coinciden';
+            } else {
+                passwordConfirmError.innerHTML = '';
+            }
+        });
+
+        anwerInput.addEventListener('input', () => {
+            answerInputError.innerHTML = '';
+        });
+
+        questionsSelect.addEventListener('change', () => {
+            questionsSelectError.innerHTML = '';
+        })
+
+
+        // Buttons Event Listeners
+
+        backBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            location.hash = AppRoutes.welcome;
+        });
+
+        avatarBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            const avatarDialog = document.querySelector('.avatar__dialog');
+            avatarDialog.showModal();
+        });
+
+        closeAvatarBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            const avatarDialog = document.querySelector('.avatar__dialog');
+            avatarDialog.close();
+        });
+
+        avatarsImg.forEach(avatar => {
+            avatar.addEventListener('click', (e) => {
+                e.preventDefault();
+                const avatarBtn = document.querySelector('.avatar');
+                avatarBtn.setAttribute('selected', 'true');
+                const avatarImg = avatar.src;
+                const avatarError = avatarBtn.nextElementSibling.nextElementSibling;
+                avatarError.innerHTML = '';
+                avatarBtn.innerHTML = `<img id="avatarSelected" src="${avatarImg}" alt="Avatar">`;
+                const avatarDialog = document.querySelector('.avatar__dialog');
+
+                avatarDialog.close();
+            });
+        })
+
+        nextQuestionBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            if (answersList.length === 3) {
+                questionsSelectError.innerHTML = 'Ya están registradas todas las preguntas';
+                return;
+            };
+            const currentQuestion = questionsSelect.selectedIndex !== 0 ? questionsSelect.options[questionsSelect.selectedIndex].text : false;
+            const currentAnswer = anwerInput.value;
+            if (currentQuestion && currentAnswer) {
+                if (answersList.find(answer => answer.question === currentQuestion)) {
+                    questionsSelectError.innerHTML = 'Ya seleccionaste esa pregunta';
+                    return;
+                }
+                if (answersList.length === 2) {
+                    nextQuestionBtn.setAttribute('disabled', 'true');
+                }
+                answersList.push(
+                    {
+                        question: currentQuestion,
+                        answer: currentAnswer
+                    }
+                )
+                questionsSelect.value = 0;
+                anwerInput.value = '';
+            } else if (currentQuestion && !currentAnswer) {
+                answerInputError.innerHTML = 'Debe responder la pregunta';
+            } else if (!currentQuestion && currentAnswer) {
+                questionsSelectError.innerHTML = 'Debe seleccionar una pregunta';
+            } else {
+                questionsSelectError.innerHTML = 'Debe seleccionar y responder 3 preguntas de seguridad';
+            }
+        });
+
+        signupBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+
+            const avatarContainer = document.querySelector('.signup__form--avatar');
+            const avatarSelected = avatarContainer.querySelector('#avatarSelected');
+            const avatarError = avatarContainer.querySelector('.error__form--message');
+
+            if (!avatarSelected) {
+                window.scrollTo(0, 0);
+                avatarError.innerHTML = 'Debe seleccionar un avatar';
+                return;
+            }
+
+            if (!emailPattern.test(emailInput.value)) {
+                emailError.innerHTML = 'Debe ser un correo válido';
+                return;
+            } else {
+                emailError.innerHTML = '';
+            }
+
+            if (usernameInput.value.length < 4) {
+                usernameError.innerHTML = 'Debe tener al menos 4 caracteres';
+                return;
+            } else {
+                usernameError.innerHTML = '';
+            }
+
+
+            if (passwordInput.value.length < 8) {
+                passwordError.innerHTML = 'Debe tener al menos 8 caracteres';
+                return;
+            } else {
+                passwordError.innerHTML = '';
+            }
+
+
+            if (passwordConfirmInput.value !== passwordInput.value) {
+                passwordConfirmError.innerHTML = 'Las contraseñas no coinciden';
+                return;
+            } else {
+                passwordConfirmError.innerHTML = '';
+            }
+
+            if (answersList.length < 3) {
+                questionsSelectError.innerHTML = 'Debe seleccionar y responder 3 preguntas de seguridad';
+                return;
+            } else {
+                questionsSelectError.innerHTML = '';
+            }
+
+            const newUser = {
+                avatar: avatarSelected.src,
+                email: emailInput.value,
+                name: usernameInput.value,
+                password: passwordInput.value,
+                firstQuestion: answersList[0].question,
+                firstAnswer: answersList[0].answer,
+                secondQuestion: answersList[1].question,
+                secondAnswer: answersList[1].answer,
+                thirdQuestion: answersList[2].question,
+                thirdAnswer: answersList[2].answer,
+            }
+
+            const user = Storage.saveUser(newUser);
+
+            user.then((data) => {
+                if (data) {
+                    location.hash = AppRoutes.login;
+                } else {
+                    console.error('Error saving user');
+                }
+            }).catch((error) => {
+                console.error('Error saving user', error);
+            });
+
+        });
+
+    } catch (error) {
+        console.error('Error with signup events...', error);
+    }
+}
+
+const myGroupsEvents = () => {}

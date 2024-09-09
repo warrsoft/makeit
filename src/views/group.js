@@ -2,37 +2,28 @@ import { AppRoutes } from "../router/routes.js";
 import { Icons, NavBar } from "../components/index.js";
 import Storage from "../storage/app-storage.js";
 
-export const MyDayView = async (token) => {
-
+export const GroupView = async (token, group) => {
     if (!token) {
         window.location.hash = AppRoutes.login;
         return;
     }
 
     const user = await Storage.getUserById(token);
+    const groups = await Storage.getGroups(token);
 
     let tasks = [];
-    let groups = [];
 
     let pendingTasks = [];
     let completedTasks = [];
 
     try {
         tasks = await Storage.getTasks(token);
-        groups = await Storage.getGroups(token);
 
         tasks = tasks.filter(task => {
             task.dueDate = task.dueDate ? new Date(task.dueDate) : null;
-            const endDay = new Date().setHours(23, 59, 59, 999);
-            const yesterday = new Date().setHours(0, 0, 0, 0);
-            const group = groups.find(group => group.id === task.groupId);
             task.group = group.color;
-            if (task.dueDate != null && task.dueDate <= endDay && task.dueDate >= yesterday) {
-                task.dueDate = task.dueDate.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: true });
-                return task;
-            }
-            if (task.myDay === 1) {
-                task.dueDate = task.dueDate.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: true });
+            if (task.groupId === group.id) {
+                task.dueDate !== null ? task.dueDate = task.dueDate.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: true }) : null;
                 return task;
             }
         });
@@ -52,12 +43,14 @@ export const MyDayView = async (token) => {
         Storage.updateNavbarGroups(groups);
     }
 
-    const myDay = document.createElement('div');
-    myDay.innerHTML = `
+
+    const groupView = document.createElement('div');
+    groupView.innerHTML = `
         <div id="myday__section">
-        ${pendingTasks.length === 0 ? completedTasks.length === 0 ? 'No tienes tareas para hoy' : '' : ''}
+        ${pendingTasks.length === 0 ? completedTasks.length === 0 ? 'No tienes tareas en este grupo' : '' : ''}
             <div id="pending__tasks">
-            ${pendingTasks.length === 0 ? '' : pendingTasks.map(task =>
+            ${pendingTasks.length === 0 ? ''
+            : pendingTasks.map(task =>
         `<article class="task" id="${task.id}">
                     <div class="task__group--color" style="background-color: ${task.group}";></div>
                     <div class="task__info">
@@ -101,5 +94,6 @@ export const MyDayView = async (token) => {
         </div>
     `;
 
-    return [myDay];
+    return [groupView];
+
 }

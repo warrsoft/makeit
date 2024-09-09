@@ -10,7 +10,7 @@ import { Icons } from './icons.js';
  * @returns 
  */
 
-export const Layout = (headerButton, title, currentDate = false, footerFirstBtn, footerSecondBtn) => {
+export const Layout = (headerButton, title, currentDate = false, footerFirstBtn = null, footerSecondBtn = null) => {
     const layout = document.createElement('div');
     layout.classList.add('layout');
 

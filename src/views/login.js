@@ -1,4 +1,7 @@
-export const LoginView = () => {
+export const LoginView = (token) => {
+
+    const navbar = document.querySelector('#navbar');
+    if (!token && navbar) navbar.remove();
 
     document.title = 'Make It - Inicio de Sesión';
 

@@ -4,3 +4,7 @@ export { SignupView } from './signup.js';
 export { NotFoundView } from './not-found.js';
 export { LoadingView } from './loading.js';
 export { MyDayView } from './myday.js';
+export { GroupView } from './group.js';
+export { SettingsView } from './settings.js';
+export { ProfileView } from './profile.js';
+export { MyGroupsView } from './mygroups.js';

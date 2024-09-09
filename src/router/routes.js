@@ -3,5 +3,9 @@ export const AppRoutes = {
     login: '#/login',
     forget: '#/forget',
     signup: '#/signup',
-    myday: '#/myday'
+    myday: '#/myday',
+    group: '#/group',
+    settings: '#/settings',
+    profile: '#/profile',
+    mygroups: '#/mygroups',
 }
