@@ -1,4 +1,4 @@
-const baseURL = process.env.BASE_URL
+const baseURL = 'https://makeit-server.vercel.app/api'
 const imagesURL = 'https://res.cloudinary.com/dzgraaqq2/image/upload/v1717354674/make-it'
 
 const getQuestions = async () => {
