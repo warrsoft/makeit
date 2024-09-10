@@ -1,5 +1,5 @@
-const baseURL = 'https://makeit-server.vercel.app/api'
-const imagesURL = 'https://res.cloudinary.com/dzgraaqq2/image/upload/v1717354674/make-it'
+const baseURL = import.meta.env.VITE_BASE_API_URL
+const imagesURL = import.meta.env.VITE_IMAGES_BASE_URL
 
 const getQuestions = async () => {
     try {
