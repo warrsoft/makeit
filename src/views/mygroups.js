@@ -19,7 +19,7 @@ export const MyGroupsView = async (token) => {
                 <button class="new__group">Nuevo Grupo</button>
             </div>
             <div class="mygroups__list">
-            ${groups.length <= 0 ? 'No tienes grupos' : groups.map(group => `
+            ${groups.length <= 1 ? 'No tienes grupos' : groups.map(group => `
                 <div class="mygroups__group" id="${group.id}">
                     <input class="group__color" type="color" value="${group.color}">
                     <input class="group__description" type="text" value="${group.description}">
