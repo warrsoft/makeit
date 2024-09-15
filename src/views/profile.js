@@ -44,39 +44,32 @@ export const ProfileView = async (token) => {
     dialog.appendChild(dialogContent);
 
     profileView.innerHTML = `
-        <form class="signup__form">
-            <div class="signup__form--avatar">
-                <button class="avatar" selected="false">
+        <form class="profile__form">
+            <div class="profile__form--avatar">
+                <button class="avatar">
                     <img src="/icons/User_01.svg" alt="Avatar">
                 </button>
                 <label class="avatar__label">Avatar</label>
                 <span class="error__form--message"></span>
             </div>
-            <div class="signup__form--group">
-                <label for="email">Correo *</label>
+            <div class="profile__form--group">
+                <label for="email">Correo</label>
                 <input type="email" id="email" name="email" required>
                 <span class="error__form--message"></span>
             </div>
-            <div class="signup__form--group">
-                <label for="name">Usuario *</label>
+            <div class="profile__form--group">
+                <label for="name">Usuario</label>
                 <input type="text" id="name" name="name" required>
                 <span class="error__form--message"></span>
             </div>
-            <div class="signup__form--group">
-                <label for="password">Clave *</label>
+            <div class="profile__form--group">
+                <label for="password">Clave</label>
                 <input type="password" id="password" name="password" required>
                 <span class="error__form--message"></span>
             </div>
-            <div class="signup__form--group">
-                <label for="passwordConfirm">Confirmar Clave *</label>
+            <div class="profile__form--group">
+                <label for="passwordConfirm">Confirmar Clave</label>
                 <input type="password" id="passwordConfirm" name="passwordConfirm" required>
-                <span class="error__form--message"></span>
-            </div>
-            <div class="signup__form--group">
-                <label for="answer">Respuesta *</label>
-                <div class="answer__container">
-                <input type="text" id="answer" name="answer">
-                <button class="next__question--btn">Siguiente</button></div>
                 <span class="error__form--message"></span>
             </div>
         </form>

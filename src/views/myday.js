@@ -9,6 +9,8 @@ export const MyDayView = async (token) => {
         return;
     }
 
+    document.title = 'Make It - Mi Día';
+
     const user = await Storage.getUserById(token);
 
     let tasks = [];

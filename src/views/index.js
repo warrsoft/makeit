@@ -8,3 +8,4 @@ export { GroupView } from './group.js';
 export { SettingsView } from './settings.js';
 export { ProfileView } from './profile.js';
 export { MyGroupsView } from './mygroups.js';
+export { ForgetView } from './forget.js';

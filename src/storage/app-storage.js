@@ -21,6 +21,26 @@ const getUserById = async (userId) => {
     }
 }
 
+const getUserQuestion = async (userId) => {
+    try {
+        const response = await fetch(`${baseURL}/users/${userId}/questions`);
+        const data = await response.json()
+        return data;
+    } catch (error) {
+        console.error('Not user found: ', error);
+    }
+}
+
+const getUserByName = async (username) => {
+    try {
+        const response = await fetch(`${baseURL}/users/username/${username}`)
+        const data = await response.json()
+        return data;
+    } catch (error) {
+        console.error('User not found', error);
+    }
+}
+
 const getTasks = async (token) => {
     try {
         const response = await fetch(`${baseURL}/tasks/${token}`);
@@ -85,8 +105,20 @@ const deleteTask = async (taskId) => {
     }
 }
 
+const deleteTasksByGroup = async (groupId) => {
+    try {
+        const response = await fetch(`${baseURL}/tasks/group/${groupId}`, {
+            method: 'DELETE',
+        })
+        const data = await response.json();
+        return data;
+    } catch (error) {
+        console.error('Error deleting tasks', error);
+    }
+}
+
 const saveSubTasks = async (subtasks, taskId) => {
-    if(subtasks.length === 0) return console.log('No subtasks to save');
+    if (subtasks.length === 0) return console.log('No subtasks to save');
     subtasks.forEach(async subtask => {
         try {
             const response = await fetch(`${baseURL}/sub-tasks/${taskId}`, {
@@ -198,6 +230,44 @@ const getGroupById = async (groupId) => {
     }
 }
 
+const getGroupByUser = async (token) => {
+    try {
+        const response = await fetch(`${baseURL}/tasks-group/${token}`);
+        const data = await response.json();
+        return data;
+    } catch (error) {
+        console.error('Error fetching group', error);
+    }
+}
+
+const updateGroup = async (group) => {
+    try {
+        const response = await fetch(`${baseURL}/tasks-group/${group.id}`, {
+            method: 'PATCH',
+            body: JSON.stringify(group),
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+        const data = await response.json();
+        return data;
+    } catch (error) {
+        console.error('Error updating group', error);
+    }
+}
+
+const deleteGroup = async (groupId) => {
+    try {
+        const response = await fetch(`${baseURL}/tasks-group/${groupId}`, {
+            method: 'DELETE',
+        })
+        const data = await response.json();
+        return data;
+    } catch (error) {
+        console.error('Error deleting group', error);
+    }
+}
+
 const saveUser = async (user) => {
     try {
         const response = await fetch(`${baseURL}/users`, {
@@ -211,6 +281,38 @@ const saveUser = async (user) => {
         return data;
     } catch (error) {
         console.error('Error saving user', error);
+    }
+}
+
+const updateUser = async (user) => {
+    try {
+        const response = await fetch(`${baseURL}/users/${user.id}`, {
+            method: 'PATCH',
+            body: JSON.stringify(user),
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+        const data = await response.json();
+        return data;
+    } catch (error) {
+        console.error('Error updating user', error);
+    }
+}
+
+const updateForgotPassword = async (user) => {
+    try {
+        const response = await fetch(`${baseURL}/users/${user.id}/forgot`, {
+            method: 'PATCH',
+            body: JSON.stringify(user),
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+        const data = await response.json();
+        return data;
+    } catch (error) {
+        console.error('Error updating user', error);
     }
 }
 
@@ -269,5 +371,13 @@ export default {
     saveGroup,
     updateNavbarGroups,
     deleteTask,
-    deleteSubTask
+    deleteSubTask,
+    updateUser,
+    getGroupByUser,
+    deleteGroup,
+    deleteTasksByGroup,
+    updateGroup,
+    getUserQuestion,
+    getUserByName,
+    updateForgotPassword
 }

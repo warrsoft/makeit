@@ -8,6 +8,8 @@ export const GroupView = async (token, group) => {
         return;
     }
 
+    document.title = `Make It - ${group.description}`;
+
     const user = await Storage.getUserById(token);
     const groups = await Storage.getGroups(token);
 

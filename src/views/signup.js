@@ -61,22 +61,22 @@ export const SignupView = async (token) => {
             </div>
             <div class="signup__form--group">
                 <label for="email">Correo *</label>
-                <input type="email" id="email" name="email" required>
+                <input type="email" id="email" name="email" required autocomplete="off">
                 <span class="error__form--message"></span>
             </div>
             <div class="signup__form--group">
                 <label for="name">Usuario *</label>
-                <input type="text" id="name" name="name" required>
+                <input type="text" id="name" name="name" required autocomplete="off">
                 <span class="error__form--message"></span>
             </div>
             <div class="signup__form--group">
                 <label for="password">Clave *</label>
-                <input type="password" id="password" name="password" required>
+                <input type="password" id="password" name="password" required autocomplete="off">
                 <span class="error__form--message"></span>
             </div>
             <div class="signup__form--group">
                 <label for="passwordConfirm">Confirmar Clave *</label>
-                <input type="password" id="passwordConfirm" name="passwordConfirm" required>
+                <input type="password" id="passwordConfirm" name="passwordConfirm" required autocomplete="off">
                 <span class="error__form--message"></span>
             </div>
             <div class="signup__form--group">
@@ -91,7 +91,7 @@ export const SignupView = async (token) => {
             <div class="signup__form--group">
                 <label for="answer">Respuesta *</label>
                 <div class="answer__container">
-                <input type="text" id="answer" name="answer">
+                <input type="text" id="answer" name="answer" autocomplete="off">
                 <button class="next__question--btn">Siguiente</button></div>
                 <span class="error__form--message"></span>
             </div>

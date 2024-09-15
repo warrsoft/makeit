@@ -1,5 +1,5 @@
 import { AppRoutes } from "./routes.js";
-import { WelcomeView, LoginView, SignupView, NotFoundView, LoadingView, MyDayView, GroupView, SettingsView, ProfileView, MyGroupsView } from '../views/index.js';
+import { WelcomeView, LoginView, SignupView, NotFoundView, LoadingView, MyDayView, GroupView, SettingsView, ProfileView, MyGroupsView, ForgetView } from '../views/index.js';
 import { Layout, Icons } from "../components/index.js";
 import { renderView, renderEventListeners } from "../use-cases/index.js";
 import Storage from "../storage/app-storage.js";
@@ -44,7 +44,10 @@ export const AppRouter = async (app) => {
                 });
             break;
         case AppRoutes.forget:
-            appContainer.innerHTML = 'Forget';
+            renderView(Layout(Icons.backArrow, 'Olvidé Mi Clave', false, 'Cambiar Clave'), ...[await ForgetView(token)], appContainer)
+            .then(() => {
+                renderEventListeners(AppRoutes.forget)
+            })
             break;
         case AppRoutes.signup:
             renderView(Layout(Icons.backArrow, 'Regístrate', false, 'Registrarse'), ...[await SignupView(token)], appContainer)

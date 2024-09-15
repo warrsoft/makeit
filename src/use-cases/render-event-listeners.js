@@ -19,14 +19,22 @@ export const renderEventListeners = (route) => {
             break;
         case AppRoutes.myday:
             groupEvents();
+            break;
         case AppRoutes.group:
             groupEvents();
+            break;
         case AppRoutes.settings:
             settingsEvents();
+            break;
         case AppRoutes.profile:
             profileEvents();
+            break;
         case AppRoutes.mygroups:
             myGroupsEvents();
+            break;
+        case AppRoutes.forget:
+            ForgetEvents();
+            break;
         default:
             break;
     }
@@ -87,9 +95,20 @@ const loginEvents = () => {
             location.hash = AppRoutes.welcome;
         });
 
-        forgetBtn.addEventListener('click', (e) => {
+        forgetBtn.addEventListener('click', async (e) => {
             e.preventDefault();
-            location.hash = AppRoutes.forget;
+            if(!nameInput.value) {
+                nameError.textContent = 'Debe ingresar el nombre de usuario';
+                return;
+            }
+            const isUser = await Storage.getUserByName(nameInput.value);
+            if(isUser.id) {
+                location.hash = AppRoutes.forget;
+                Storage.setToStorage('userId', isUser.id)
+            } else {
+                nameError.textContent = 'Usuario no encontrado';
+                console.error('User not found');
+            }
         });
 
         accessBtn.addEventListener('click', (e) => {
@@ -266,7 +285,7 @@ const signupEvents = () => {
                 answersList.push(
                     {
                         question: currentQuestion,
-                        answer: currentAnswer
+                        answer: currentAnswer.toLowerCase()
                     }
                 )
                 questionsSelect.value = 0;
@@ -448,7 +467,7 @@ const navbarEvents = () => {
                     userId: Storage.getFromStorage('token')
                 }
                 const newGroup = await Storage.saveGroup(group);
-                if(newGroup.id) {
+                if (newGroup.id) {
                     addGroupDialog.close();
                     Storage.setToStorage('currentGroup', newGroup.id);
                     location.hash = AppRoutes.group;
@@ -565,16 +584,16 @@ const taskFrameEvents = () => {
 
         let currentGroup = Storage.getFromStorage('currentGroup');
         currentGroup *= 1;
-        
+
         let isMyDay = 0;
 
         let taskId = Storage.getFromStorage('taskId');
 
         if (taskId.length > 0) {
-            if(taskMyDayInput.checked) isMyDay = 1;
+            if (taskMyDayInput.checked) isMyDay = 1;
             else isMyDay = 0;
         } else {
-            if(currentGroup === 0) isMyDay = 1;
+            if (currentGroup === 0) isMyDay = 1;
             else isMyDay = 0;
         }
 
@@ -618,7 +637,7 @@ const taskFrameEvents = () => {
             }
         })
 
-        if(!task.id) {
+        if (!task.id) {
             const taskCreated = await Storage.saveTask(task);
             if (taskCreated.id) {
                 if (subTasks.length > 0) {
@@ -647,32 +666,32 @@ const taskFrameEvents = () => {
 
     deleteTaskBtn.onclick = async (e) => {
         e.preventDefault();
-        if(taskId) {
+        if (taskId) {
             const deletedTask = await Storage.deleteTask(taskId);
-                try {
-                    const subTasks = await Storage.getSubTasks(taskId);
-                    if(subTasks.length > 0) {
-                        const deletedSubTasks = [];
-                        subTasks.forEach(async subtask => {
-                            if(subtask.id) {
-                                deletedSubTasks.push(await Storage.deleteSubTask(subtask.id));
-                            }
-                        })
-                        if(deletedSubTasks.length > 0) {
-                            taskDialog.close();
-                            AppRouter();
+            try {
+                const subTasks = await Storage.getSubTasks(taskId);
+                if (subTasks.length > 0) {
+                    const deletedSubTasks = [];
+                    subTasks.forEach(async subtask => {
+                        if (subtask.id) {
+                            deletedSubTasks.push(await Storage.deleteSubTask(subtask.id));
                         }
-                    } else {
+                    })
+                    if (deletedSubTasks.length > 0) {
                         taskDialog.close();
                         AppRouter();
                     }
-                } catch {
+                } else {
                     taskDialog.close();
                     AppRouter();
                 }
+            } catch {
+                taskDialog.close();
+                AppRouter();
             }
-            taskDialog.close();
-            AppRouter();
+        }
+        taskDialog.close();
+        AppRouter();
     }
 }
 
@@ -743,7 +762,8 @@ const groupEvents = async () => {
         })
     }
 
-    newTaskBtn.onclick = async () => {
+    newTaskBtn.onclick = async (e) => {
+        e.preventDefault();
         const taskDialog = await taskFrameView();
         document.body.appendChild(taskDialog);
         taskDialog.showModal();
@@ -778,8 +798,9 @@ const settingsEvents = () => {
     }
 }
 
-const profileEvents = () => {
+const profileEvents = async () => {
     try {
+
 
         // Inputs Variables
 
@@ -787,46 +808,34 @@ const profileEvents = () => {
         const usernameInput = document.querySelector('#name');
         const passwordInput = document.querySelector('#password');
         const passwordConfirmInput = document.querySelector('#passwordConfirm');
-        const questionsSelect = document.querySelector('#questions');
-        const anwerInput = document.querySelector('#answer');
 
         const emailError = emailInput.nextElementSibling;
         const usernameError = usernameInput.nextElementSibling;
         const passwordError = passwordInput.nextElementSibling;
         const passwordConfirmError = passwordConfirmInput.nextElementSibling;
-        const questionsSelectError = questionsSelect.nextElementSibling;
-        const answerInputError = document.querySelector('.answer__container').nextElementSibling;
+
+        // Fill Profile Data
+
+        const user = await Storage.getUserById(Storage.getFromStorage('token'));
+        const avatarContainer = document.querySelector('.profile__form--avatar');
+        const avatarImg = avatarContainer.querySelector('.avatar img');
+        avatarImg.id = 'avatarSelected';
+        avatarImg.src = user.avatar;
+        emailInput.value = user.email;
+        emailInput.disabled = true;
+        usernameInput.value = user.name;
+        usernameInput.disabled = true;
 
         // Buttons Variables
 
         const backBtn = document.querySelector('.layout__header--button');
         const avatarBtn = document.querySelector('.avatar');
         const closeAvatarBtn = document.querySelector('.avatar__dialog--close');
-        const signupBtn = document.querySelector('.layout__footer--button');
+        const updateBtn = document.querySelector('.layout__footer--button');
         const avatarsImg = document.querySelectorAll('.avatar__dialog--img');
-        const nextQuestionBtn = document.querySelector('.next__question--btn');
 
 
         // Inputs Event Listeners
-        const emailPattern = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,6}$/;
-
-        emailInput.addEventListener('input', (e) => {
-            const emailValue = e.target.value;
-            if (!emailPattern.test(emailValue)) {
-                emailError.innerHTML = 'Debe ser un correo válido';
-            } else {
-                emailError.innerHTML = '';
-            }
-        });
-
-        usernameInput.addEventListener('input', (e) => {
-            const usernameValue = e.target.value;
-            if (usernameValue.length < 4) {
-                usernameError.innerHTML = 'Debe tener al menos 4 caracteres';
-            } else {
-                usernameError.innerHTML = '';
-            }
-        });
 
         passwordInput.addEventListener('input', (e) => {
             const passwordValue = e.target.value;
@@ -847,20 +856,12 @@ const profileEvents = () => {
             }
         });
 
-        anwerInput.addEventListener('input', () => {
-            answerInputError.innerHTML = '';
-        });
-
-        questionsSelect.addEventListener('change', () => {
-            questionsSelectError.innerHTML = '';
-        })
-
 
         // Buttons Event Listeners
 
         backBtn.addEventListener('click', (e) => {
             e.preventDefault();
-            location.hash = AppRoutes.welcome;
+            location.hash = AppRoutes.settings;
         });
 
         avatarBtn.addEventListener('click', (e) => {
@@ -890,43 +891,10 @@ const profileEvents = () => {
             });
         })
 
-        nextQuestionBtn.addEventListener('click', (e) => {
-            e.preventDefault();
-            if (answersList.length === 3) {
-                questionsSelectError.innerHTML = 'Ya están registradas todas las preguntas';
-                return;
-            };
-            const currentQuestion = questionsSelect.selectedIndex !== 0 ? questionsSelect.options[questionsSelect.selectedIndex].text : false;
-            const currentAnswer = anwerInput.value;
-            if (currentQuestion && currentAnswer) {
-                if (answersList.find(answer => answer.question === currentQuestion)) {
-                    questionsSelectError.innerHTML = 'Ya seleccionaste esa pregunta';
-                    return;
-                }
-                if (answersList.length === 2) {
-                    nextQuestionBtn.setAttribute('disabled', 'true');
-                }
-                answersList.push(
-                    {
-                        question: currentQuestion,
-                        answer: currentAnswer
-                    }
-                )
-                questionsSelect.value = 0;
-                anwerInput.value = '';
-            } else if (currentQuestion && !currentAnswer) {
-                answerInputError.innerHTML = 'Debe responder la pregunta';
-            } else if (!currentQuestion && currentAnswer) {
-                questionsSelectError.innerHTML = 'Debe seleccionar una pregunta';
-            } else {
-                questionsSelectError.innerHTML = 'Debe seleccionar y responder 3 preguntas de seguridad';
-            }
-        });
-
-        signupBtn.addEventListener('click', (e) => {
+        updateBtn.addEventListener('click', (e) => {
             e.preventDefault();
 
-            const avatarContainer = document.querySelector('.signup__form--avatar');
+            const avatarContainer = document.querySelector('.profile__form--avatar');
             const avatarSelected = avatarContainer.querySelector('#avatarSelected');
             const avatarError = avatarContainer.querySelector('.error__form--message');
 
@@ -936,61 +904,43 @@ const profileEvents = () => {
                 return;
             }
 
-            if (!emailPattern.test(emailInput.value)) {
-                emailError.innerHTML = 'Debe ser un correo válido';
-                return;
-            } else {
-                emailError.innerHTML = '';
+
+            if (passwordInput.value) {
+                if (passwordInput.value.length < 8) {
+                    passwordError.innerHTML = 'Debe tener al menos 8 caracteres';
+                    return;
+                } else {
+                    passwordError.innerHTML = '';
+                }
+
+
+                if (passwordConfirmInput.value !== passwordInput.value) {
+                    passwordConfirmError.innerHTML = 'Las contraseñas no coinciden';
+                    return;
+                } else {
+                    passwordConfirmError.innerHTML = '';
+                }
             }
 
-            if (usernameInput.value.length < 4) {
-                usernameError.innerHTML = 'Debe tener al menos 4 caracteres';
-                return;
-            } else {
-                usernameError.innerHTML = '';
-            }
-
-
-            if (passwordInput.value.length < 8) {
-                passwordError.innerHTML = 'Debe tener al menos 8 caracteres';
-                return;
-            } else {
-                passwordError.innerHTML = '';
-            }
-
-
-            if (passwordConfirmInput.value !== passwordInput.value) {
-                passwordConfirmError.innerHTML = 'Las contraseñas no coinciden';
-                return;
-            } else {
-                passwordConfirmError.innerHTML = '';
-            }
-
-            if (answersList.length < 3) {
-                questionsSelectError.innerHTML = 'Debe seleccionar y responder 3 preguntas de seguridad';
-                return;
-            } else {
-                questionsSelectError.innerHTML = '';
-            }
-
-            const newUser = {
+            const updatedUser = {
+                id: Storage.getFromStorage('token'),
                 avatar: avatarSelected.src,
-                email: emailInput.value,
-                name: usernameInput.value,
                 password: passwordInput.value,
-                firstQuestion: answersList[0].question,
-                firstAnswer: answersList[0].answer,
-                secondQuestion: answersList[1].question,
-                secondAnswer: answersList[1].answer,
-                thirdQuestion: answersList[2].question,
-                thirdAnswer: answersList[2].answer,
             }
 
-            const user = Storage.saveUser(newUser);
+            Object.keys(updatedUser).forEach(key => {
+                if (updatedUser[key] === null || updatedUser[key] === '' || updatedUser[key] === undefined) {
+                    delete updatedUser[key];
+                }
+            })
+
+            const user = Storage.updateUser(updatedUser);
 
             user.then((data) => {
                 if (data) {
-                    location.hash = AppRoutes.login;
+                    location.hash = AppRoutes.myday;
+                    const navbarAvatar = document.querySelector('.navbar__header--userinfo img');
+                    navbarAvatar.src = updatedUser.avatar;
                 } else {
                     console.error('Error saving user');
                 }
@@ -1001,8 +951,233 @@ const profileEvents = () => {
         });
 
     } catch (error) {
-        console.error('Error with signup events...', error);
+        console.error('Error with profile events...', error);
     }
 }
 
-const myGroupsEvents = () => {}
+const myGroupsEvents = async () => {
+    try {
+
+        // Buttons Variables
+
+        const backBtn = document.querySelector('.layout__header--button');
+        const addGroup = document.querySelector('.new__group');
+        const deleteGroup = document.querySelectorAll('.delete__group--btn');
+        const updateBtn = document.querySelector('.layout__footer--button');
+
+        // Buttons Event Listeners
+
+        backBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            location.hash = AppRoutes.settings;
+        });
+
+        addGroup.onclick = () => {
+            let addGroupDialog = document.querySelector('.add__group--dialog');
+            if (!addGroupDialog) {
+                addGroupDialog = document.createElement('dialog');
+                addGroupDialog.classList.add('add__group--dialog');
+                addGroupDialog.innerHTML =
+                    `
+                <form class="add__group">
+                    <div class="add__group--container">
+                        <label for="group__name">Nombre del grupo</label>
+                        <input type="text" id="group__name" class="group__name">
+                        <span class="error__form--message"></span>
+                    </div>
+                    <div class="add__group--container">
+                        <label for="group__color">Color del grupo</label>
+                        <input  type="color" id="group__color" class="group__color">
+                    </div>
+                    <div class="add__group--ctas">
+                        <button class="save__group--btn">Guardar</button>
+                        <button class="cancel__group--btn">Cancelar</button>
+                    </div>
+                </form>
+            `;
+                document.body.appendChild(addGroupDialog);
+            } else {
+                const groupName = addGroupDialog.querySelector('.group__name');
+                const groupColor = addGroupDialog.querySelector('.group__color');
+                groupName.value = '';
+                groupColor.value = '#000000';
+            }
+
+            addGroupDialog.showModal();
+
+            const saveGroupBtn = addGroupDialog.querySelector('.save__group--btn');
+            const cancelGroupBtn = addGroupDialog.querySelector('.cancel__group--btn');
+
+            saveGroupBtn.onclick = async (e) => {
+                e.preventDefault();
+                const groupName = addGroupDialog.querySelector('.group__name');
+                const groupColor = addGroupDialog.querySelector('.group__color');
+                if (!groupName.value) {
+                    groupName.nextElementSibling.innerHTML = 'Campo requerido';
+                    return;
+                }
+                const group = {
+                    description: groupName.value,
+                    color: groupColor.value,
+                    userId: Storage.getFromStorage('token')
+                }
+                const newGroup = await Storage.saveGroup(group);
+                if (newGroup.id) {
+                    addGroupDialog.close();
+                    location.hash = AppRoutes.mygroups;
+                    AppRouter();
+                };
+            };
+
+            cancelGroupBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                addGroupDialog.close();
+            });
+        };
+
+        deleteGroup.forEach(btn => {
+            btn.addEventListener('click', async (e) => {
+                const groupId = e.target.closest('.mygroups__group').id;
+                const deletedGroup = await Storage.deleteGroup(groupId);
+                if (deletedGroup) {
+                    const deletedTasks = await Storage.deleteTasksByGroup(groupId);
+                    location.hash = AppRoutes.mygroups;
+                    AppRouter();
+                } else {
+                    console.error('Error deleting group');
+                }
+            })
+        })
+
+        updateBtn.onclick = (e) => {
+            e.preventDefault();
+            const groups = document.querySelectorAll('.mygroups__group');
+            const updatedGroups = [];
+            groups.forEach(group => {
+                const groupElement = {
+                    id: group.id,
+                    description: group.querySelector('.group__description').textContent,
+                    color: group.querySelector('.group__color').style.backgroundColor
+                }
+                updatedGroups.push(groupElement);
+            })
+            updatedGroups.forEach(async group => {
+                const updatedGroup = await Storage.updateGroup(group);
+                if (updatedGroup) {
+                    location.hash = AppRoutes.mygroups;
+                    AppRouter();
+                } else {
+                    console.error('Error updating group');
+                }
+            })
+        }
+
+    } catch (error) {
+        console.error('Error with groups events...', error);
+    }
+}
+
+const ForgetEvents = () => {
+    const emailInput = document.querySelector('#email');
+    const emailError = emailInput.nextElementSibling;
+    const firstAnswer = document.querySelector('#firstQuestion');
+    const firstAnswerError = firstAnswer.nextElementSibling;
+    const secondAnswer = document.querySelector('#secondQuestion');
+    const secondAnswerError = secondAnswer.nextElementSibling;
+    const thirdAnswer = document.querySelector('#thirdQuestion');
+    const thirdAnswerError = thirdAnswer.nextElementSibling;
+    const passwordInput = document.querySelector('#password');
+    const passwordError = passwordInput.nextElementSibling;
+    const passwordConfirmInput = document.querySelector('#confirmPassword');
+    const passwordConfirmError = passwordConfirmInput.nextElementSibling;
+
+    passwordConfirmInput.addEventListener('input', (e) => {
+        const passwordConfirmValue = e.target.value;
+        const passwordValue = passwordInput.value;
+        if (passwordConfirmValue !== passwordValue) {
+            passwordConfirmError.innerHTML = 'Las claves no coinciden';
+        } else {
+            passwordConfirmError.innerHTML = '';
+        }
+    });
+
+    const backBtn = document.querySelector('.layout__header--button');
+    const sendBtn = document.querySelector('.layout__footer--button');
+
+    backBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        Storage.setToStorage('userId', '')
+        location.hash = AppRoutes.login;
+    });
+
+    sendBtn.addEventListener('click', async (e) => {
+        e.preventDefault();
+        const emailValue = emailInput.value;
+        const firstAnswerValue = firstAnswer.value;
+        const secondAnswerValue = secondAnswer.value;
+        const thirdAnswerValue = thirdAnswer.value;
+
+        if (!emailValue) {
+            emailError.innerHTML = 'Campo requerido';
+            return;
+        } else {
+            emailError.innerHTML = '';
+        }
+
+        if (!firstAnswerValue) {
+            firstAnswerError.innerHTML = 'Campo requerido';
+            return;
+        } else {
+            firstAnswerError.innerHTML = '';
+        }
+
+        if (!secondAnswerValue) {
+            secondAnswerError.innerHTML = 'Campo requerido';
+            return;
+        } else {
+            secondAnswerError.innerHTML = '';
+        }
+
+        if (!thirdAnswerValue) {
+            thirdAnswerError.innerHTML = 'Campo requerido';
+            return;
+        } else {
+            thirdAnswerError.innerHTML = '';
+        }
+
+        if (!passwordInput.value) {
+            passwordError.innerHTML = 'Campo requerido';
+            return;
+        } else {
+            passwordError.innerHTML = '';
+        }
+
+        if (!passwordConfirmInput.value) {
+            passwordConfirmError.innerHTML = 'Campo requerido';
+            return;
+        } else {
+            passwordConfirmError.innerHTML = '';
+            if (passwordConfirmInput.value !== passwordInput.value) {
+                passwordConfirmError.innerHTML = 'Las claves no coinciden';
+                return;
+            } else {
+                passwordConfirmError.innerHTML = '';
+            }
+        }
+
+        const user = {
+            id: Storage.getFromStorage('userId'),
+            firstAnswer: firstAnswerValue.toLowerCase(),
+            secondAnswer: secondAnswerValue.toLowerCase(),
+            thirdAnswer: thirdAnswerValue.toLowerCase(),
+            password: passwordInput.value
+        }
+
+        const updatedUser = await Storage.updateForgotPassword(user);
+
+        if(updatedUser.id) {
+            Storage.setToStorage('userId', '');
+            location.hash = AppRoutes.login;
+        }
+    });
+}
